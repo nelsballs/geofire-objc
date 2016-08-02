@@ -53,8 +53,28 @@ enum {
     [self setLocation:location forKey:key withCompletionBlock:nil];
 }
 
+- (void)setLocation:(CLLocation *)location forKey:(NSString *)key data:(NSDictionary *)data
+{
+    [self setLocation:location forKey:key data:data withCompletionBlock:nil];
+}
+
 - (void)setLocation:(CLLocation *)location
              forKey:(NSString *)key
+withCompletionBlock:(GFCompletionBlock)block
+{
+    if (!CLLocationCoordinate2DIsValid(location.coordinate)) {
+        [NSException raise:NSInvalidArgumentException
+                    format:@"Not a valid coordinate: [%f, %f]",
+         location.coordinate.latitude, location.coordinate.longitude];
+    }
+    [self setLocationValue:location
+                    forKey:key
+                 withBlock:block];
+}
+
+- (void)setLocation:(CLLocation *)location
+             forKey:(NSString *)key
+               data:(NSDictionary *)data
 withCompletionBlock:(GFCompletionBlock)block
 {
     if (!CLLocationCoordinate2DIsValid(location.coordinate)) {
@@ -106,6 +126,40 @@ withCompletionBlock:(GFCompletionBlock)block
             });
         }
     }];
+}
+
+- (void)setLocationValue:(CLLocation *)location
+                  forKey:(NSString *)key
+                    data:(NSDictionary*) data
+               withBlock:(GFCompletionBlock)block
+{
+    NSDictionary *value;
+    NSString *priority;
+    NSMutableDictionary *allValues = [NSMutableDictionary dictionary];
+    
+    if (location != nil) {
+        NSNumber *lat = [NSNumber numberWithDouble:location.coordinate.latitude];
+        NSNumber *lng = [NSNumber numberWithDouble:location.coordinate.longitude];
+        NSString *geoHash = [GFGeoHash newWithLocation:location.coordinate].geoHashValue;
+        value = @{ @"l": @[ lat, lng ], @"g": geoHash };
+        priority = geoHash;
+        
+        [allValues addEntriesFromDictionary:data];
+        [allValues addEntriesFromDictionary:value];
+    } else {
+        value = nil;
+        priority = nil;
+        allValues = nil;
+    }
+    [[self firebaseRefForLocationKey:key] setValue:allValues
+                                       andPriority:priority
+                               withCompletionBlock:^(NSError *error, FIRDatabaseReference *ref) {
+                                   if (block != nil) {
+                                       dispatch_async(self.callbackQueue, ^{
+                                           block(error);
+                                       });
+                                   }
+                               }];
 }
 
 - (void)removeKey:(NSString *)key
