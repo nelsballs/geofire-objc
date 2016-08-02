@@ -145,7 +145,8 @@ withCompletionBlock:(GFCompletionBlock)block
         value = @{ @"l": @[ lat, lng ], @"g": geoHash };
         priority = geoHash;
         
-        [allValues addEntriesFromDictionary:data];
+        NSDictionary *extra = [NSDictionary dictionaryWithObject:data forKey:@"data"];
+        [allValues addEntriesFromDictionary:extra];
         [allValues addEntriesFromDictionary:value];
     } else {
         value = nil;

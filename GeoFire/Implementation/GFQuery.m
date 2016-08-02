@@ -21,7 +21,7 @@
 @property (nonatomic) BOOL isInQuery;
 @property (nonatomic, strong) CLLocation *location;
 @property (nonatomic, strong) GFGeoHash *geoHash;
-
+@property (nonatomic, strong) NSDictionary *data;
 @end
 
 @implementation GFQueryLocationInfo
@@ -226,7 +226,7 @@
                                                                       GFQueryResultBlock block,
                                                                       BOOL *stop) {
             dispatch_async(self.geoFire.callbackQueue, ^{
-                block(key, info.location);
+                block(key, info.location, info.data);
             });
         }];
     } else if (!isNew && changedLocation && info.isInQuery) {
@@ -234,7 +234,7 @@
                                                                     GFQueryResultBlock block,
                                                                     BOOL *stop) {
             dispatch_async(self.geoFire.callbackQueue, ^{
-                block(key, info.location);
+                block(key, info.location, info.data);
             });
         }];
     } else if (wasInQuery && !info.isInQuery) {
@@ -242,7 +242,7 @@
                                                                      GFQueryResultBlock block,
                                                                      BOOL *stop) {
             dispatch_async(self.geoFire.callbackQueue, ^{
-                block(key, info.location);
+                block(key, info.location, info.data);
             });
         }];
     }
@@ -304,7 +304,7 @@
                                                                                          GFQueryResultBlock block,
                                                                                          BOOL *stop) {
                                 dispatch_async(self.geoFire.callbackQueue, ^{
-                                    block(key, location);
+                                    block(key, location, info.data);
                                 });
                             }];
                         }
@@ -475,7 +475,7 @@
                                                                                 GFQueryLocationInfo *info,
                                                                                 BOOL *stop) {
                             if (info.isInQuery) {
-                                block(key, info.location);
+                                block(key, info.location, info.data);
                             }
                         }];
                     };
