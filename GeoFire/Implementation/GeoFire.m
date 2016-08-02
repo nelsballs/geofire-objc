@@ -84,6 +84,7 @@ withCompletionBlock:(GFCompletionBlock)block
     }
     [self setLocationValue:location
                     forKey:key
+                      data:data
                  withBlock:block];
 }
 
