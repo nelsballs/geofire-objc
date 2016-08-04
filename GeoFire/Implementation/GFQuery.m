@@ -205,6 +205,13 @@
 - (void)updateLocationInfo:(CLLocation *)location
                     forKey:(NSString *)key
 {
+    [self updateLocationInfo:location forKey:key data:nil];
+}
+
+- (void)updateLocationInfo:(CLLocation *)location
+                    forKey:(NSString *)key
+                      data:(NSDictionary *)data
+{
     NSAssert(location != nil, @"Internal Error! Location must not be nil!");
     GFQueryLocationInfo *info = self.locationInfos[key];
     BOOL isNew = NO;
@@ -217,6 +224,7 @@
                              info.location.coordinate.longitude == location.coordinate.longitude);
     BOOL wasInQuery = info.isInQuery;
 
+    info.data = data;
     info.location = location;
     info.isInQuery = [self locationIsInQuery:location];
     info.geoHash = [GFGeoHash newWithLocation:location.coordinate];
@@ -262,9 +270,13 @@
 {
     @synchronized(self) {
         CLLocation *location = [GeoFire locationFromValue:snapshot.value];
-        if (location != nil) {
+        NSDictionary *data = [GeoFire dataFromValue:snapshot.value];
+        if (location != nil && data != nil) {
+            [self updateLocationInfo:location forKey:snapshot.key data:data];
+        } else if (location != nil) {
             [self updateLocationInfo:location forKey:snapshot.key];
-        } else {
+        }
+        else {
             // TODO: error?
         }
     }
@@ -274,9 +286,13 @@
 {
     @synchronized(self) {
         CLLocation *location = [GeoFire locationFromValue:snapshot.value];
-        if (location != nil) {
+        NSDictionary *data = [GeoFire dataFromValue:snapshot.value];
+        if (location != nil && data != nil) {
+            [self updateLocationInfo:location forKey:snapshot.key data:data];
+        } else if (location != nil) {
             [self updateLocationInfo:location forKey:snapshot.key];
-        } else {
+        }
+        else {
             // TODO: error?
         }
     }

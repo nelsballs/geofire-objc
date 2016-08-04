@@ -14,6 +14,7 @@
 - (FIRDatabaseReference *)firebaseRefForLocationKey:(NSString *)key;
 
 + (CLLocation *)locationFromValue:(id)dict;
++ (NSDictionary *)dataFromValue:(id)dict;
 + (NSDictionary *)dictFromLocation:(CLLocation *)location;
 
 @end
