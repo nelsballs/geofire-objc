@@ -16,6 +16,7 @@
 
 @implementation GFQueryTest
 
+#define SETLOCDATA(k,x,y,z) [self.geoFire setLocation:L(x,y) forKey:k data:z]
 #define SETLOC(k,x,y) [self.geoFire setLocation:L(x,y) forKey:k]
 #define SETLOC_WAIT_COMPLETE(k,x,y) \
 do { \
@@ -41,7 +42,7 @@ do { \
     GFQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     NSMutableDictionary *actual = [NSMutableDictionary dictionary];
     WAIT_SIGNALS(3, ^(dispatch_semaphore_t barrier) {
-        [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+        [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
             if ([actual objectForKey:key] == nil) {
                 actual[key] = L2S(location);
             } else {
@@ -64,7 +65,7 @@ do { \
     SETLOC(@"4", 37.0002, -121.9998);
     GFQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     NSMutableSet *actual = [NSMutableSet set];
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (![actual containsObject:key]) {
             [actual addObject:key];
             if (location != nil) {
@@ -99,7 +100,7 @@ do { \
     GFQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     NSMutableArray *actual = [NSMutableArray array];
     WAIT_SIGNALS(4, ^(dispatch_semaphore_t barrier) {
-        [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+        [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
             [actual addObject:key];
             [actual addObject:L2S(location)];
             dispatch_semaphore_signal(barrier);
@@ -133,13 +134,13 @@ do { \
     SETLOC(@"4", -0.0001, -0.0001);
     GFQuery *query = [self.geoFire queryAtLocation:L(0,0) withRadius:0.5];
     NSMutableDictionary *actual = [NSMutableDictionary dictionary];
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         actual[key] = L2S(location);
     }];
-    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         actual[key] = L2S(location);
     }];
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (location == nil) {
             actual[key] = @"null";
         } else {
@@ -185,7 +186,7 @@ do { \
     SETLOC(@"4", 37.0002, -121.9998);
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     __block NSMutableDictionary *actual = [NSMutableDictionary dictionary];
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if ([actual objectForKey:key] == nil) {
             actual[key] = L2S(location);
         } else {
@@ -212,11 +213,11 @@ do { \
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     NSMutableSet *actual = [NSMutableSet set];
     __block NSUInteger count = 0;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         count++;
     }];
     WAIT_FOR(count == 3);
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (![actual containsObject:key]) {
             [actual addObject:key];
         } else {
@@ -240,10 +241,10 @@ do { \
     SETLOC(@"4", 37.0002, -121.9998);
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     __block NSUInteger count = 0;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         count++;
     }];
-    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         XCTFail(@"Key moved!");
     }];
     WAIT_FOR(count == 3);
@@ -263,10 +264,10 @@ do { \
 {
     SETLOC(@"0", 37.0010001, -122.0010001);
     GFRegionQuery *query = [self.geoFire queryWithRegion:MKCoordinateRegionMake(C(37,-122), S(0.002, 0.002))];
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         XCTFail(@"Key outside of query entered");
     }];
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         XCTFail(@"Key outside of query exited");
     }];
     __block BOOL done = NO;
@@ -283,10 +284,10 @@ do { \
     GFQuery *query = [self.geoFire queryAtLocation:L(0, 0) withRadius:0.5];
     NSMutableArray *actual = [NSMutableArray array];
     WAIT_SIGNALS(2, (^(dispatch_semaphore_t barrier) {
-        [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+        [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
             XCTFail(@"Key should not exit!");
         }];
-        [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+        [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
             [actual addObject:[NSString stringWithFormat:@"MOVED(%@,%@)", key, L2S(location)]];
             dispatch_semaphore_signal(barrier);
         }];
@@ -311,26 +312,26 @@ do { \
     __block NSUInteger keyExitedEvents = 0;
     __block NSUInteger keyMovedEvents = 0;
     __block BOOL shouldIgnore = YES;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         keyEnteredEvents++;
     }];
-    FirebaseHandle handleEntered = [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    FirebaseHandle handleEntered = [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Event triggered for removed observer!");
         }
     }];
-    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         keyMovedEvents++;
     }];
-    FirebaseHandle handleMoved = [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+    FirebaseHandle handleMoved = [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Event triggered for removed observer!");
         }
     }];
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         keyExitedEvents++;
     }];
-    FirebaseHandle handleExited = [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    FirebaseHandle handleExited = [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Event triggered for removed observer!");
         }
@@ -363,19 +364,19 @@ do { \
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:0.5];
     __block BOOL shouldIgnore = YES;
     __block NSUInteger countEntered = 0;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Callback triggered!");
         } else {
             countEntered++;
         }
     }];
-    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyMoved withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Callback triggered!");
         }
     }];
-    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyExited withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (!shouldIgnore) {
             XCTFail(@"Callback triggered!");
         }
@@ -398,14 +399,15 @@ do { \
 
 - (void)testReadyListener
 {
-    SETLOC(@"0", 0, 0);
-    SETLOC(@"1", 37.0000, -122.0000);
-    SETLOC(@"2", 37.0001, -122.0001);
-    SETLOC(@"3", 37.1000, -122.0000);
-    SETLOC(@"4", 37.0002, -121.9998);
+//    SETLOC(@"0", 0, 0);
+//    SETLOC(@"1", 37.0000, -122.0000);
+//    SETLOC(@"2", 37.0001, -122.0001);
+//    SETLOC(@"3", 37.1000, -122.0000);
+//    SETLOC(@"4", 37.0002, -121.9998);
+    SETLOCDATA(@"5",37.0002, -121.9998 , @{@"test" : @"test"});
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:500];
     __block BOOL readyEventFired = NO;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if (readyEventFired) {
             XCTFail("Entered event after ready");
         }
@@ -452,7 +454,7 @@ do { \
     GFCircleQuery *query = [self.geoFire queryAtLocation:L(37,-122) withRadius:500];
 
     __block BOOL keyZeroEntered = NO;
-    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location) {
+    [query observeEventType:GFEventTypeKeyEntered withBlock:^(NSString *key, CLLocation *location, NSDictionary *data) {
         if ([key isEqualToString:@"0"]) {
             keyZeroEntered = YES;
         }

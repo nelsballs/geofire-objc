@@ -194,6 +194,14 @@ withCompletionBlock:(GFCompletionBlock)block
     return nil;
 }
 
++ (NSDictionary *)dataFromValue:(id)value
+{
+    if ([value isKindOfClass:[NSDictionary class]] && [value objectForKey:@"data"] != nil) {
+        return value[@"data"];
+    }
+    return nil;
+}
+
 - (void)getLocationForKey:(NSString *)key withCallback:(GFCallbackBlock)callback
 {
     [[self firebaseRefForLocationKey:key]
@@ -201,23 +209,27 @@ withCompletionBlock:(GFCompletionBlock)block
      withBlock:^(FIRDataSnapshot *snapshot) {
          dispatch_async(self.callbackQueue, ^{
              if (snapshot.value == nil || [snapshot.value isMemberOfClass:[NSNull class]]) {
-                 callback(nil, nil);
+                 callback(nil, nil, nil);
              } else {
                  CLLocation *location = [GeoFire locationFromValue:snapshot.value];
-                 if (location != nil) {
-                     callback(location, nil);
-                 } else {
+                 NSDictionary *data = [GeoFire dataFromValue:snapshot.value];
+                 if (location != nil && data != nil) {
+                     callback(location, nil, data);
+                 } else if (location != nil ) {
+                     callback(location, nil, nil);
+                 }
+                 else {
                      NSMutableDictionary* details = [NSMutableDictionary dictionary];
                      [details setValue:[NSString stringWithFormat:@"Unable to parse location value: %@", snapshot.value]
                                 forKey:NSLocalizedDescriptionKey];
                      NSError *error = [NSError errorWithDomain:kGeoFireErrorDomain code:GFParseError userInfo:details];
-                     callback(nil, error);
+                     callback(nil, error, nil);
                  }
              }
          });
      } withCancelBlock:^(NSError *error) {
          dispatch_async(self.callbackQueue, ^{
-             callback(nil, error);
+             callback(nil, error, nil);
          });
      }];
 }

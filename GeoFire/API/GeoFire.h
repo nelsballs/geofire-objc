@@ -37,7 +37,7 @@
 @class FIRDatabaseReference;
 
 typedef void (^GFCompletionBlock) (NSError *error);
-typedef void (^GFCallbackBlock) (CLLocation *location, NSError *error);
+typedef void (^GFCallbackBlock) (CLLocation *location, NSError *error, NSDictionary *data);
 
 /**
  * A GeoFire instance is used to store geo location data at a Firebase location.

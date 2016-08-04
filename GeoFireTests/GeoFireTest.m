@@ -25,6 +25,7 @@
 
         [self.geoFire setLocation:L(0, 0)
                            forKey:@"loc1"
+                             data:@{@"test":@"test"}
               withCompletionBlock:^(NSError *error) {
                   XCTAssertNil(error);
                   dispatch_semaphore_signal(barrier);
@@ -46,11 +47,12 @@
     WAIT_SIGNALS(1, (^(dispatch_semaphore_t barrier) {
         [self.firebaseRef observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot *snapshot) {
             id expected =
-            @{ @"loc1": @{ @"l": @[@0, @0], @"g": @"7zzzzzzzzz" },
+            @{ @"loc1": @{ @"l": @[@0, @0], @"g": @"7zzzzzzzzz", @"data": @{@"test" : @"test"}},
                @"loc2": @{ @"l": @[@50, @50], @"g": @"v0gs3y0zh7" },
                @"loc3": @{ @"l": @[@-90, @-90], @"g": @"1bpbpbpbpb" }
                };
-
+            
+            NSLog(@"snapshot result = %@", snapshot.value);
             XCTAssertEqualObjects(snapshot.value, expected);
             XCTAssertEqualObjects([snapshot childSnapshotForPath:@"loc1"].priority, @"7zzzzzzzzz");
             XCTAssertEqualObjects([snapshot childSnapshotForPath:@"loc2"].priority, @"v0gs3y0zh7");
@@ -66,35 +68,35 @@
 {
     NSMutableArray *actual = [NSMutableArray array];
     WAIT_SIGNALS(5, (^(dispatch_semaphore_t barrier) {
-        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             [actual addObject:@"null"];
             XCTAssertNil(error);
             dispatch_semaphore_signal(barrier);
         }];
 
-        [self.geoFire setLocation:L(0,0) forKey:@"loc1"];
-        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire setLocation:L(0,0) forKey:@"loc1" data: @{@"test" : @"test"}];
+        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             [actual addObject:L2S(location)];
             XCTAssertNil(error);
             dispatch_semaphore_signal(barrier);
         }];
 
         [self.geoFire setLocation:L(1,1) forKey:@"loc2"];
-        [self.geoFire getLocationForKey:@"loc2" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc2" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             [actual addObject:L2S(location)];
             XCTAssertNil(error);
             dispatch_semaphore_signal(barrier);
         }];
 
         [self.geoFire setLocation:L(5,5) forKey:@"loc1"];
-        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             [actual addObject:L2S(location)];
             XCTAssertNil(error);
             dispatch_semaphore_signal(barrier);
         }];
 
         [self.geoFire removeKey:@"loc1"];
-        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             [actual addObject:@"null"];
             XCTAssertNil(error);
             dispatch_semaphore_signal(barrier);
@@ -125,7 +127,7 @@
         }];
     }));
     WAIT_SIGNALS(2, (^(dispatch_semaphore_t barrier) {
-        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc1" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             if (error) {
                 [actual addObject:error.domain];
             } else {
@@ -133,7 +135,7 @@
             }
             dispatch_semaphore_signal(barrier);
         }];
-        [self.geoFire getLocationForKey:@"loc2" withCallback:^(CLLocation *location, NSError *error) {
+        [self.geoFire getLocationForKey:@"loc2" withCallback:^(CLLocation *location, NSError *error, NSDictionary *data) {
             if (error) {
                 [actual addObject:error.domain];
             } else {
